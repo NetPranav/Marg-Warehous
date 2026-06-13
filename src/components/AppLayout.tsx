@@ -9,6 +9,8 @@ import {
   Dashboard, LocalShipping, ViewInAr,
   Notifications, Menu as MenuIcon, Logout,
   Radar, Inventory2, Gavel, ChevronLeft,
+  CalendarMonth, FactCheck, Anchor, BookOnline, MeetingRoom, ChecklistRtl,
+  Warning, Forum, Place, Search, QueuePlayNext, EventNote, ConnectWithoutContact, BarChart
 } from '@mui/icons-material';
 import { useAuthStore } from '@/stores/authStore';
 import { useQuery } from '@tanstack/react-query';
@@ -19,13 +21,65 @@ const DRAWER_COLLAPSED = 72;
 const ORANGE = '#E8700A';
 const BROWN = '#8B3A0E';
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-  { label: '3D Digital Twin', icon: <ViewInAr />, path: '/digital-twin', featured: true },
-  { label: 'Inbound Yard & Docks', icon: <Radar />, path: '/inbound-yard' },
-  { label: 'Storage Optimization', icon: <Inventory2 />, path: '/storage-optimization' },
-  { label: 'SLA & Resource Ledger', icon: <Gavel />, path: '/sla-ledger' },
-  { label: 'Incoming Shipments', icon: <LocalShipping />, path: '/shipments' },
+const NAV_GROUPS = [
+  {
+    items: [
+      { label: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
+    ]
+  },
+  {
+    title: 'Inbound Planning',
+    items: [
+      { label: 'Arrival Schedule', icon: <CalendarMonth />, path: '/arrival-schedule' },
+      { label: 'Warehouse Approvals', icon: <FactCheck />, path: '/warehouse-approvals' },
+    ]
+  },
+  {
+    title: 'Dock Operations',
+    items: [
+      { label: 'Inbound Yard', icon: <Radar />, path: '/inbound-yard' },
+      { label: 'Dock Board', icon: <Anchor />, path: '/dock-board' },
+      { label: 'Dock Reservations', icon: <BookOnline />, path: '/dock-reservations' },
+    ]
+  },
+  {
+    title: 'Receiving Operations',
+    items: [
+      { label: 'Gate Check-In', icon: <MeetingRoom />, path: '/gate-checkin' },
+      { label: 'Receiving Checklist', icon: <ChecklistRtl />, path: '/receiving-checklist' },
+      { label: 'Exceptions', icon: <Warning />, path: '/exceptions' },
+      { label: 'Shipment Conversations', icon: <Forum />, path: '/conversations' },
+    ]
+  },
+  {
+    title: 'Storage Operations',
+    items: [
+      { label: 'Warehouse Slotting', icon: <ViewInAr />, path: '/digital-twin', featured: true },
+      { label: 'Inventory Placement', icon: <Place />, path: '/inventory-placement' },
+      { label: 'Parcel Locator', icon: <Search />, path: '/parcel-locator' },
+    ]
+  },
+  {
+    title: 'Forwarding Operations',
+    items: [
+      { label: 'Forwarding Queue', icon: <QueuePlayNext />, path: '/forwarding-queue' },
+      { label: 'Outbound Planning', icon: <EventNote />, path: '/outbound-planning' },
+      { label: 'Next Warehouse Coordination', icon: <ConnectWithoutContact />, path: '/next-warehouse' },
+    ]
+  },
+  {
+    title: 'Performance',
+    items: [
+      { label: 'SLA Ledger', icon: <Gavel />, path: '/sla-ledger' },
+      { label: 'Warehouse Analytics', icon: <BarChart />, path: '/analytics' },
+    ]
+  },
+  {
+    title: 'Notifications',
+    items: [
+      { label: 'Notifications', icon: <Notifications />, path: '/notifications' },
+    ]
+  }
 ];
 
 export default function AppLayout() {
@@ -43,7 +97,7 @@ export default function AppLayout() {
   });
   const unreadCount = unreadData?.data?.data?.unread_count ?? 0;
 
-  const currentLabel = NAV_ITEMS.find(n => location.pathname.startsWith(n.path))?.label || 'Dashboard';
+  const currentLabel = NAV_GROUPS.flatMap(g => g.items).find(n => location.pathname.startsWith(n.path))?.label || 'Dashboard';
 
   const drawerContent = (
     <Box sx={{
@@ -82,7 +136,7 @@ export default function AppLayout() {
             Marg WMS
           </Typography>
           <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.65rem', letterSpacing: '0.04em' }}>
-            Warehouse Portal
+            {user?.organization_name || 'Warehouse Portal'}
           </Typography>
         </Box>
         {!isMobile && (
@@ -99,68 +153,82 @@ export default function AppLayout() {
       <Divider sx={{ borderColor: alpha(ORANGE, 0.06), mx: 2 }} />
 
       {/* Nav items */}
-      <List sx={{ px: 1.5, flex: 1, pt: 2, display: 'flex', flexDirection: 'column', gap: 0.3 }}>
-        {NAV_ITEMS.map((item) => {
-          const isActive = location.pathname.startsWith(item.path);
-          return (
-            <ListItemButton
-              key={item.path}
-              onClick={() => { navigate(item.path); if (isMobile) setDrawerOpen(false); }}
-              sx={{
-                borderRadius: '14px',
-                py: 1.1,
-                px: 1.5,
-                position: 'relative',
-                bgcolor: isActive ? alpha(ORANGE, 0.1) : 'transparent',
-                color: isActive ? ORANGE : '#64748B',
-                '&:hover': {
-                  bgcolor: alpha(ORANGE, 0.06),
-                  color: ORANGE,
-                },
-                transition: 'all 0.2s ease',
-                ...(item.featured && !isActive && {
-                  background: `linear-gradient(135deg, ${alpha(ORANGE, 0.05)} 0%, ${alpha(BROWN, 0.03)} 100%)`,
-                  border: `1px solid ${alpha(ORANGE, 0.1)}`,
-                }),
-                ...(isActive && {
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 3,
-                    height: '60%',
-                    borderRadius: '0 4px 4px 0',
-                    background: `linear-gradient(180deg, ${ORANGE} 0%, ${BROWN} 100%)`,
-                  },
-                }),
-              }}
-            >
-              <ListItemIcon sx={{
-                color: 'inherit', minWidth: 36,
-                '& .MuiSvgIcon-root': { fontSize: item.featured ? '1.35rem' : '1.25rem' },
+      <List sx={{ px: 1.5, flex: 1, pt: 2, display: 'flex', flexDirection: 'column', gap: 0.3, overflowY: 'auto' }}>
+        {NAV_GROUPS.map((group, gIndex) => (
+          <Box key={gIndex} sx={{ mb: group.title ? 1.5 : 0.5 }}>
+            {group.title && (
+              <Typography sx={{ 
+                px: 1.5, pb: 0.5, pt: 1,
+                fontSize: '0.65rem', fontWeight: 800, color: '#94A3B8', 
+                textTransform: 'uppercase', letterSpacing: '0.05em' 
               }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{
-                  fontSize: '0.83rem',
-                  fontWeight: isActive ? 700 : 500,
-                  letterSpacing: '-0.01em',
-                }}
-              />
-              {isActive && (
-                <Box sx={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  bgcolor: ORANGE,
-                  boxShadow: `0 0 8px ${alpha(ORANGE, 0.5)}`,
-                }} />
-              )}
-            </ListItemButton>
-          );
-        })}
+                {group.title}
+              </Typography>
+            )}
+            {group.items.map((item) => {
+              const isActive = location.pathname.startsWith(item.path);
+              return (
+                <ListItemButton
+                  key={item.path}
+                  onClick={() => { navigate(item.path); if (isMobile) setDrawerOpen(false); }}
+                  sx={{
+                    borderRadius: '14px',
+                    py: 1.1,
+                    px: 1.5,
+                    mb: 0.3,
+                    position: 'relative',
+                    bgcolor: isActive ? alpha(ORANGE, 0.1) : 'transparent',
+                    color: isActive ? ORANGE : '#64748B',
+                    '&:hover': {
+                      bgcolor: alpha(ORANGE, 0.06),
+                      color: ORANGE,
+                    },
+                    transition: 'all 0.2s ease',
+                    ...((item as any).featured && !isActive && {
+                      background: `linear-gradient(135deg, ${alpha(ORANGE, 0.05)} 0%, ${alpha(BROWN, 0.03)} 100%)`,
+                      border: `1px solid ${alpha(ORANGE, 0.1)}`,
+                    }),
+                    ...(isActive && {
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        left: 0,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: 3,
+                        height: '60%',
+                        borderRadius: '0 4px 4px 0',
+                        background: `linear-gradient(180deg, ${ORANGE} 0%, ${BROWN} 100%)`,
+                      },
+                    }),
+                  }}
+                >
+                  <ListItemIcon sx={{
+                    color: 'inherit', minWidth: 36,
+                    '& .MuiSvgIcon-root': { fontSize: (item as any).featured ? '1.35rem' : '1.25rem' },
+                  }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontSize: '0.83rem',
+                      fontWeight: isActive ? 700 : 500,
+                      letterSpacing: '-0.01em',
+                    }}
+                  />
+                  {isActive && (
+                    <Box sx={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      bgcolor: ORANGE,
+                      boxShadow: `0 0 8px ${alpha(ORANGE, 0.5)}`,
+                    }} />
+                  )}
+                </ListItemButton>
+              );
+            })}
+          </Box>
+        ))}
       </List>
 
       {/* User */}

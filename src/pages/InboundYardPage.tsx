@@ -155,36 +155,9 @@ function InboundRadarView() {
     });
 
     // No truck data — show mock blips
+    // No truck data
     if (trucks.length === 0) {
-      const mockBlips = [
-        { angle: time * 0.15, dist: 0.65, label: 'MH-12-AB-3456' },
-        { angle: time * 0.15 + 1.8, dist: 0.4, label: 'GJ-05-XY-7890' },
-        { angle: time * 0.15 + 3.5, dist: 0.82, label: 'DL-08-CD-1234' },
-        { angle: time * 0.15 + 5.0, dist: 0.25, label: 'KA-01-EF-5678' },
-      ];
-      mockBlips.forEach(({ angle, dist, label }) => {
-        const tx = cx + Math.cos(angle) * dist * maxR;
-        const ty = cy + Math.sin(angle) * dist * maxR;
-
-        const pulseScale = 1 + Math.sin(time * 2 + angle) * 0.3;
-        ctx.beginPath();
-        ctx.arc(tx, ty, 8 * pulseScale, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(232, 112, 10, ${0.1 / pulseScale})`;
-        ctx.fill();
-
-        ctx.beginPath(); ctx.arc(tx, ty, 4, 0, Math.PI * 2);
-        ctx.fillStyle = ORANGE; ctx.fill();
-
-        ctx.beginPath(); ctx.setLineDash([4, 4]);
-        ctx.moveTo(tx, ty); ctx.lineTo(cx, cy);
-        ctx.strokeStyle = `rgba(232, 112, 10, 0.12)`;
-        ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
-
-        ctx.fillStyle = '#CBD5E1';
-        ctx.font = 'bold 9px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(label, tx, ty - 12);
-      });
+      // Intentionally left blank as requested (no mock data)
     }
 
     animRef.current = requestAnimationFrame(draw);
@@ -243,30 +216,11 @@ function DockGanttChart({ docks }: { docks: any[] }) {
   const now = new Date();
   const currentHour = now.getHours() + now.getMinutes() / 60;
 
-  // Generate mock slots from docks data
+  // Empty real slots if endpoints aren't providing them
   const ganttData: DockSlot[] = docks.slice(0, 8).map((dock: any, i: number) => ({
     dockId: dock.id,
     dockNumber: dock.dock_number || `D-${String(i + 1).padStart(2, '0')}`,
-    slots: [
-      {
-        shipment: `SHP-${1000 + i * 3}`,
-        start: 7 + i * 0.5,
-        end: 9 + i * 0.3,
-        status: 'completed' as const,
-      },
-      {
-        shipment: `SHP-${1001 + i * 3}`,
-        start: 10 + i * 0.2,
-        end: 12 + i * 0.4,
-        status: i === 2 ? 'delayed' as const : 'active' as const,
-      },
-      {
-        shipment: `SHP-${1002 + i * 3}`,
-        start: 14 + i * 0.3,
-        end: 16 + i * 0.2,
-        status: 'upcoming' as const,
-      },
-    ],
+    slots: [],
   }));
 
   const slotColor = (s: string) => {

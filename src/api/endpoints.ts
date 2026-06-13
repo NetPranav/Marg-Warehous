@@ -4,6 +4,8 @@ export const authApi = {
   login: (email: string, password: string) =>
     client.post('/auth/login/', { email, password }),
   profile: () => client.get('/auth/me/'),
+  registerWarehouse: (data: Record<string, unknown>) => 
+    client.post('/auth/register-warehouse/', data),
 };
 
 export const dashboardApi = {

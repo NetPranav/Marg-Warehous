@@ -148,6 +148,15 @@ export default function LoginPage() {
           </Button>
         </form>
 
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+              Don't have an account?{' '}
+              <Button color="primary" onClick={() => navigate('/register')} sx={{ textTransform: 'none', color: '#E8700A' }}>
+                Register your warehouse
+              </Button>
+            </Typography>
+        </Box>
+
         <Typography variant="body2" sx={{ textAlign: 'center', mt: 3.5, color: '#CBD5E1', fontSize: '0.75rem' }}>
           Marg — Intelligent Warehouse Management
         </Typography>

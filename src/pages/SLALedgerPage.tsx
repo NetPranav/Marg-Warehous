@@ -62,31 +62,11 @@ function CountdownTimer({ arrivedAt, freeTimeMin }: { arrivedAt: string | null; 
 
 // ─── Mock data generators ────────────────────────────────────────
 function generateShiftForecast() {
-  const hours = [];
-  const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const h = new Date(now.getTime() + i * 3600000);
-    const hour = h.getHours();
-    const label = hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : hour === 0 ? '12 AM' : `${hour} AM`;
-    // Simulate truck volume with a peak pattern
-    const base = 2;
-    const peak = Math.sin((hour - 6) / 12 * Math.PI) * 5;
-    hours.push({
-      time: label,
-      volume: Math.max(0, Math.round(base + peak + Math.random() * 2)),
-      isPeak: peak > 3,
-    });
-  }
-  return hours;
+  return [];
 }
 
 function generateChargebackHistory() {
-  return [
-    { id: 1, shipment: 'SHP-A2F4E1', truck: 'MH-12-AB-3456', factory: 'Tata Motors Pune', gateIn: '08:15', gateOut: '13:45', freeTime: 180, actualMin: 330, penalty: 25000, date: '11 Jun 2026' },
-    { id: 2, shipment: 'SHP-B7C3D9', truck: 'GJ-05-XY-7890', factory: 'Reliance Jamnagar', gateIn: '10:30', gateOut: '14:20', freeTime: 180, actualMin: 230, penalty: 8400, date: '10 Jun 2026' },
-    { id: 3, shipment: 'SHP-C1E8F2', truck: 'DL-08-CD-1234', factory: 'Maruti Gurgaon', gateIn: '06:00', gateOut: '09:15', freeTime: 180, actualMin: 195, penalty: 2500, date: '09 Jun 2026' },
-    { id: 4, shipment: 'SHP-D4G6H3', truck: 'KA-01-EF-5678', factory: 'Infosys Mysore', gateIn: '14:00', gateOut: '19:30', freeTime: 180, actualMin: 330, penalty: 25000, date: '08 Jun 2026' },
-  ];
+  return [];
 }
 
 export default function SLALedgerPage() {

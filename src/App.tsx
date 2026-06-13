@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import AppLayout from '@/components/AppLayout';
 import LoginPage from '@/pages/LoginPage';
+import RegisterWarehousePage from '@/pages/RegistrationFlow/RegisterWarehousePage';
 import DashboardPage from '@/pages/DashboardPage';
 import IncomingShipmentsPage from '@/pages/IncomingShipmentsPage';
 import ShipmentDetailPage from '@/pages/ShipmentDetailPage';
@@ -10,6 +11,21 @@ import InboundYardPage from '@/pages/InboundYardPage';
 import StorageOptimizationPage from '@/pages/StorageOptimizationPage';
 import SLALedgerPage from '@/pages/SLALedgerPage';
 import { Box, CircularProgress, Typography, alpha } from '@mui/material';
+
+// New placeholders (will be implemented)
+const ArrivalSchedulePage = lazy(() => import('@/pages/ArrivalSchedulePage'));
+const WarehouseApprovalsPage = lazy(() => import('@/pages/WarehouseApprovalsPage'));
+const GateCheckInPage = lazy(() => import('@/pages/GateCheckInPage'));
+const ReceivingChecklistPage = lazy(() => import('@/pages/ReceivingChecklistPage'));
+const ExceptionsPage = lazy(() => import('@/pages/ExceptionsPage'));
+const ShipmentConversationsPage = lazy(() => import('@/pages/ShipmentConversationsPage'));
+const InventoryPlacementPage = lazy(() => import('@/pages/InventoryPlacementPage'));
+const ParcelLocatorPage = lazy(() => import('@/pages/ParcelLocatorPage'));
+const ForwardingQueuePage = lazy(() => import('@/pages/ForwardingQueuePage'));
+const OutboundPlanningPage = lazy(() => import('@/pages/OutboundPlanningPage'));
+const NextWarehousePage = lazy(() => import('@/pages/NextWarehousePage'));
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 
 const SlottingPage = lazy(() => import('@/pages/SlottingPage'));
 
@@ -45,6 +61,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterWarehousePage />} />
       <Route
         element={
           <ProtectedRoute>
@@ -59,6 +76,29 @@ export default function App() {
         <Route path="inbound-yard" element={<InboundYardPage />} />
         <Route path="storage-optimization" element={<StorageOptimizationPage />} />
         <Route path="sla-ledger" element={<SLALedgerPage />} />
+        
+        {/* New Workflow Routes wrapped in Suspense */}
+        <Route path="arrival-schedule" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ArrivalSchedulePage /></Suspense>} />
+        <Route path="warehouse-approvals" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><WarehouseApprovalsPage /></Suspense>} />
+        
+        {/* Dock Operations (Existing inbound-yard + new) */}
+        <Route path="dock-board" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><Typography sx={{ p: 4 }}>Dock Board (Under Construction)</Typography></Suspense>} />
+        <Route path="dock-reservations" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><Typography sx={{ p: 4 }}>Dock Reservations (Under Construction)</Typography></Suspense>} />
+
+        <Route path="gate-checkin" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><GateCheckInPage /></Suspense>} />
+        <Route path="receiving-checklist" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ReceivingChecklistPage /></Suspense>} />
+        <Route path="exceptions" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ExceptionsPage /></Suspense>} />
+        <Route path="conversations" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ShipmentConversationsPage /></Suspense>} />
+
+        <Route path="inventory-placement" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><InventoryPlacementPage /></Suspense>} />
+        <Route path="parcel-locator" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ParcelLocatorPage /></Suspense>} />
+
+        <Route path="forwarding-queue" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><ForwardingQueuePage /></Suspense>} />
+        <Route path="outbound-planning" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><OutboundPlanningPage /></Suspense>} />
+        <Route path="next-warehouse" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><NextWarehousePage /></Suspense>} />
+
+        <Route path="analytics" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><AnalyticsPage /></Suspense>} />
+        <Route path="notifications" element={<Suspense fallback={<CircularProgress sx={{ m: 4 }}/>}><NotificationsPage /></Suspense>} />
       </Route>
       <Route
         path="digital-twin"
@@ -74,6 +114,9 @@ export default function App() {
       <Route path="docks" element={<Navigate to="/inbound-yard" replace />} />
       <Route path="recommendations" element={<Navigate to="/inbound-yard" replace />} />
       <Route path="detention" element={<Navigate to="/sla-ledger" replace />} />
+      
+      {/* Catch-all route */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

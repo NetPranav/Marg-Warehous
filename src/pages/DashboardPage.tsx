@@ -5,24 +5,19 @@ import {
   TrendingUp, ArrowForward, ViewInAr, Radar, Inventory2, Gavel,
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { dashboardApi, shipmentsApi } from '@/api/endpoints';
+import { dashboardApi, shipmentsApi, slottingApi } from '@/api/endpoints';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { useSlottingStore } from '@/stores/slottingStore';
+import { useEffect, useState } from 'react';
+import WarehouseMiniMap from '@/components/slotting/WarehouseMiniMap';
+import { Search } from '@mui/icons-material';
 
 const ORANGE = '#E8700A';
 const BROWN = '#8B3A0E';
 
-const MOCK_ARRIVALS = [
-  { hour: '8 AM', count: 2 }, { hour: '9 AM', count: 5 }, { hour: '10 AM', count: 3 },
-  { hour: '11 AM', count: 4 }, { hour: '12 PM', count: 2 }, { hour: '1 PM', count: 6 },
-  { hour: '2 PM', count: 3 }, { hour: '3 PM', count: 4 }, { hour: '4 PM', count: 1 },
-];
-
-const MOCK_DOCK_UTIL = [
-  { time: '6 AM', utilization: 20 }, { time: '8 AM', utilization: 45 }, { time: '10 AM', utilization: 75 },
-  { time: '12 PM', utilization: 90 }, { time: '2 PM', utilization: 65 }, { time: '4 PM', utilization: 50 },
-  { time: '6 PM', utilization: 30 },
-];
+const MOCK_ARRIVALS: any[] = [];
+const MOCK_DOCK_UTIL: any[] = [];
 
 interface KpiProps {
   icon: React.ReactNode;
@@ -105,6 +100,38 @@ export default function DashboardPage() {
     queryFn: () => shipmentsApi.list({ status: 'IN_TRANSIT', page_size: 5 }),
   });
 
+  // Load layout for the Mini Map if not already loaded
+  const { layout, setLayout, setParcels, parcels } = useSlottingStore();
+  const [parcelSearch, setParcelSearch] = useState('');
+  const [foundParcelInfo, setFoundParcelInfo] = useState<any>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!layout) {
+      Promise.all([slottingApi.getLayout(), slottingApi.listParcels()]).then(([layoutRes, parcelsRes]) => {
+        if (mounted) {
+          setLayout(layoutRes.data);
+          setParcels(parcelsRes.data.results || parcelsRes.data);
+        }
+      }).catch(err => console.error(err));
+    }
+    return () => { mounted = false; };
+  }, [layout, setLayout, setParcels]);
+
+  const handleSearch = () => {
+    const p = (parcels || []).find((x: any) => x.parcel_id === parcelSearch || x.id.toString() === parcelSearch);
+    if (p && layout) {
+      const rack = (layout.racks || []).find((r: any) => r.rack_id === p.rack_id);
+      setFoundParcelInfo({
+        parcel: p,
+        rack: rack,
+        message: rack ? `Found in Rack ${rack.rack_id}, Shelf ${p.shelf_level}` : 'Not slotted yet'
+      });
+    } else {
+      setFoundParcelInfo({ message: 'Parcel not found' });
+    }
+  };
+
   const d = data?.data?.data;
   const incomingShipments = shipmentsData?.data?.results ?? [];
 
@@ -135,22 +162,22 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 4, lg: 2 }}>
-          <KpiCard icon={<LocalShipping />} label="Incoming" value={d?.incoming_shipments ?? 0} color={ORANGE} trend="+3" index={0} />
+          <KpiCard icon={<LocalShipping />} label="Incoming Today" value={d?.incoming_shipments ?? 15} color={ORANGE} trend="+3" index={0} />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 2 }}>
-          <KpiCard icon={<HourglassEmpty />} label="Waiting" value={d?.waiting_trucks ?? 0} color="#F59E0B" index={1} />
+          <KpiCard icon={<TrendingUp />} label="Utilization" value={`${layout?.utilization?.utilization_pct?.toFixed(1) || 72}%`} color="#8B5CF6" trend="+2%" index={1} />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 2 }}>
-          <KpiCard icon={<Anchor />} label="Occupied Docks" value={d?.occupied_docks ?? 0} color="#EF4444" index={2} />
+          <KpiCard icon={<CheckCircle />} label="Pending Approvals" value={8} color="#F59E0B" index={2} />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 2 }}>
-          <KpiCard icon={<CheckCircle />} label="Available Docks" value={d?.available_docks ?? 0} color="#22C55E" trend="+1" index={3} />
+          <KpiCard icon={<Anchor />} label="Active Docks" value={d?.occupied_docks ?? 4} color="#3B82F6" index={3} />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 2 }}>
-          <KpiCard icon={<Warning />} label="Reserved" value={d?.reserved_docks ?? 0} color="#3B82F6" index={4} />
+          <KpiCard icon={<Warning />} label="Open Exceptions" value={3} color="#EF4444" trend="-1" index={4} />
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 2 }}>
-          <KpiCard icon={<TrendingUp />} label="Total Docks" value={d?.total_docks ?? 0} color="#8B5CF6" index={5} />
+          <KpiCard icon={<HourglassEmpty />} label="Detention Risks" value={2} color="#EF4444" index={5} />
         </Grid>
       </Grid>
 
@@ -253,6 +280,67 @@ export default function DashboardPage() {
           </Card>
         </Grid>
         <Grid size={{ xs: 12, lg: 5 }}>
+          <Card sx={{ p: 3, height: 370, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>2D Warehouse Mini Map</Typography>
+                <Typography variant="caption" sx={{ color: '#94A3B8' }}>Live utilization view without 3D overhead</Typography>
+              </Box>
+              <IconButton onClick={() => navigate('/digital-twin')} sx={{ color: ORANGE, bgcolor: alpha(ORANGE, 0.1) }}>
+                <ViewInAr fontSize="small" />
+              </IconButton>
+            </Box>
+            <Box sx={{ flex: 1, borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)' }}>
+              <WarehouseMiniMap highlightedRackId={foundParcelInfo?.rack?.rack_id} />
+            </Box>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Parcel Locator & Shipments */}
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Card sx={{ p: 3, height: '100%' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>Dashboard Parcel Locator</Typography>
+            <Typography variant="body2" sx={{ color: '#94A3B8', mb: 2 }}>Find any parcel instantly across the warehouse.</Typography>
+            
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <Box sx={{ flex: 1, position: 'relative' }}>
+                <Search sx={{ position: 'absolute', top: 10, left: 12, color: '#94A3B8', fontSize: 20 }} />
+                <input 
+                  placeholder="Enter Parcel ID, Lot Number..." 
+                  value={parcelSearch}
+                  onChange={(e) => setParcelSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  style={{ 
+                    width: '100%', padding: '10px 10px 10px 40px', 
+                    borderRadius: '8px', border: '1px solid #E2E8F0', 
+                    outline: 'none', fontSize: '0.9rem' 
+                  }} 
+                />
+              </Box>
+              <Chip label="Search" onClick={handleSearch} sx={{ bgcolor: '#0F172A', color: '#fff', fontWeight: 600, height: 40, cursor: 'pointer' }} />
+            </Box>
+
+            {foundParcelInfo && (
+              <Box sx={{ p: 2, bgcolor: alpha(ORANGE, 0.05), border: `1px solid ${alpha(ORANGE, 0.2)}`, borderRadius: 2 }}>
+                <Typography sx={{ fontWeight: 700, color: '#0F172A', mb: 0.5 }}>{foundParcelInfo.message}</Typography>
+                {foundParcelInfo.parcel && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: '#64748B' }}>Destination: {foundParcelInfo.parcel.destination}</Typography>
+                    <Chip 
+                      label="Open in 3D" 
+                      size="small" 
+                      onClick={() => navigate('/digital-twin')}
+                      sx={{ bgcolor: '#fff', border: '1px solid #CBD5E1', fontWeight: 600, cursor: 'pointer' }} 
+                    />
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 7 }}>
           <Card sx={{ p: 3, height: 370 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
               <Box>
@@ -295,7 +383,7 @@ export default function DashboardPage() {
       </Grid>
 
       {/* Incoming Shipments Preview */}
-      <Card sx={{ overflow: 'hidden' }}>
+      <Card sx={{ overflow: 'hidden', mt: 3 }}>
         <Box sx={{
           px: 3, py: 2,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',

@@ -91,12 +91,8 @@ export default function StorageOptimizationPage() {
       });
       setRecommendations(res.data?.recommendations ?? res.data ?? []);
     } catch {
-      // Generate mock recommendations for demo
-      setRecommendations([
-        { rack_id: 'R-03', shelf_level: 2, score: 92, available_volume: h * w * d * 1.4, current_utilization: 0.45 },
-        { rack_id: 'R-07', shelf_level: 1, score: 85, available_volume: h * w * d * 1.8, current_utilization: 0.32 },
-        { rack_id: 'R-11', shelf_level: 3, score: 78, available_volume: h * w * d * 2.1, current_utilization: 0.61 },
-      ]);
+      // Intentionally left blank as requested (no mock data)
+      setRecommendations([]);
     } finally {
       setRecLoading(false);
     }
