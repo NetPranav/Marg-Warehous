@@ -1,15 +1,27 @@
-import { Box, Typography, ToggleButtonGroup, ToggleButton, Paper, Grid } from '@mui/material';
+import { Box, Typography, ToggleButtonGroup, ToggleButton, Paper, Grid, Button } from '@mui/material';
 import { ViewInAr, Edit, FormatListBulleted } from '@mui/icons-material';
 import { useSlottingStore } from '@/stores/slottingStore';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import EditParcelDialog from './EditParcelDialog';
 
 export default function SlottingHUD() {
-  const { viewMode, setViewMode, layout } = useSlottingStore();
+  const { viewMode, setViewMode, layout, selectedParcel, clearSelection } = useSlottingStore();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   if (!layout) return null;
   const util = layout.utilization;
 
   return (
     <>
+      {/* Back Button */}
+      <Box sx={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
+        <Button variant="contained" color="secondary" onClick={() => navigate('/dashboard')}>
+          Back to Dashboard
+        </Button>
+      </Box>
+
       {/* Top Bar: View Mode Toggles */}
       <Box sx={{
         position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)',
@@ -73,6 +85,30 @@ export default function SlottingHUD() {
           </Grid>
         </Paper>
       </Box>
+
+      {/* Selected Parcel Overlay */}
+      {selectedParcel && (
+        <Paper elevation={6} sx={{
+          position: 'absolute', top: 80, right: 20, zIndex: 10,
+          width: 300, p: 2, borderRadius: '12px'
+        }}>
+          <Typography variant="h6" fontWeight={700} gutterBottom>Parcel {selectedParcel.parcel_id}</Typography>
+          <Typography variant="body2" color="text.secondary">Current Shelf: {selectedParcel.shelf}</Typography>
+          <Typography variant="body2" color="text.secondary">Dims: {selectedParcel.width.toFixed(2)}x{selectedParcel.height.toFixed(2)}x{selectedParcel.depth.toFixed(2)} m</Typography>
+          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+            <Button size="small" variant="contained" onClick={() => setEditDialogOpen(true)}>Edit Parcel</Button>
+            <Button size="small" variant="outlined" onClick={clearSelection}>Close</Button>
+          </Box>
+        </Paper>
+      )}
+
+      {selectedParcel && (
+        <EditParcelDialog 
+          open={editDialogOpen} 
+          onClose={() => setEditDialogOpen(false)} 
+          parcel={selectedParcel} 
+        />
+      )}
     </>
   );
 }

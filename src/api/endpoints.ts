@@ -45,14 +45,27 @@ export const notificationsApi = {
   unreadCount: () => client.get('/notifications/unread-count/'),
 };
 
-// ─── Phase 7: Slotting APIs ────────────────────────────────────────────────
+// ─── Telemetry APIs ────────────────────────────────────────────────
+export const telemetryApi = {
+  latest: () => client.get('/telemetry/latest/'),
+  history: (params: { shipment_id?: number; driver_id?: number }) =>
+    client.get('/telemetry/history/', { params }),
+};
 
+// ─── Geofencing APIs ───────────────────────────────────────────────
+export const geofencesApi = {
+  list: (params?: Record<string, unknown>) => client.get('/geofences/', { params }),
+};
+
+// ─── Slotting APIs ─────────────────────────────────────────────────
 export const slottingApi = {
   // Layout
   getLayout: (warehouseId?: number) =>
     client.get('/warehouse-layout/', { params: warehouseId ? { warehouse: warehouseId } : {} }),
   updateLayout: (data: Record<string, unknown>) =>
     client.patch('/warehouse-layout/', data),
+  initLayout: (data: Record<string, unknown>) =>
+    client.post('/warehouse-layout/init/', data),
 
   // Racks
   listRacks: (params?: Record<string, unknown>) =>
@@ -67,8 +80,12 @@ export const slottingApi = {
   // Shelves
   listShelves: (params?: Record<string, unknown>) =>
     client.get('/shelves/', { params }),
+  createShelf: (data: Record<string, unknown>) =>
+    client.post('/shelves/', data),
   updateShelf: (id: number, data: Record<string, unknown>) =>
     client.patch(`/shelves/${id}/`, data),
+  deleteShelf: (id: number) =>
+    client.delete(`/shelves/${id}/`),
 
   // Parcels
   listParcels: (params?: Record<string, unknown>) =>
@@ -77,6 +94,10 @@ export const slottingApi = {
     client.get(`/parcels/${id}/`),
   createParcel: (data: Record<string, unknown>) =>
     client.post('/parcels/', data),
+  updateParcel: (id: number, data: Record<string, unknown>) =>
+    client.patch(`/parcels/${id}/`, data),
+  deleteParcel: (id: number) =>
+    client.delete(`/parcels/${id}/`),
 
   // Slotting intelligence
   recommend: (data: Record<string, unknown>) =>

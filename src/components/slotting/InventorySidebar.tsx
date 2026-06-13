@@ -13,8 +13,8 @@ export default function InventorySidebar() {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       list = list.filter(p => 
-        p.parcel_id.toLowerCase().includes(q) || 
-        p.destination.toLowerCase().includes(q) ||
+        (p.parcel_id || '').toLowerCase().includes(q) || 
+        (p.destination || '').toLowerCase().includes(q) ||
         (p.rack_id && p.rack_id.toLowerCase().includes(q))
       );
     }

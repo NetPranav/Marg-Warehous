@@ -16,6 +16,7 @@ export default function AddParcelDialog({ open, onClose }: { open: boolean; onCl
     width: 0.5,
     depth: 0.5,
     weight: 20,
+    color: '#C28E5F',
     destination: '',
     expected_dispatch_date: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
     priority: 'MEDIUM',
@@ -46,7 +47,7 @@ export default function AddParcelDialog({ open, onClose }: { open: boolean; onCl
         ...formData
       };
       const resRec = await slottingApi.recommend(recData);
-      setRecommendations(resRec.data);
+      setRecommendations(resRec.data.recommendations || []);
 
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to get recommendation');
@@ -96,8 +97,12 @@ export default function AddParcelDialog({ open, onClose }: { open: boolean; onCl
             <Grid item xs={4}>
               <TextField label="Depth (m)" name="depth" type="number" fullWidth size="small" value={formData.depth} onChange={handleChange} />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={8}>
               <TextField label="Weight (kg)" name="weight" type="number" fullWidth size="small" value={formData.weight} onChange={handleChange} />
+            </Grid>
+            <Grid item xs={4} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">Color:</Typography>
+              <input type="color" name="color" value={formData.color} onChange={handleChange} style={{ border: 'none', width: '100%', height: 38, padding: 0, cursor: 'pointer', borderRadius: 4 }} />
             </Grid>
             
             <Grid item xs={12} sx={{ mt: 1 }}>

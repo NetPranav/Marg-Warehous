@@ -6,30 +6,26 @@ import {
   useMediaQuery, useTheme, Divider, alpha,
 } from '@mui/material';
 import {
-  Dashboard, LocalShipping, Anchor, Recommend, Warning,
-  Notifications, Menu as MenuIcon, Logout, ViewInAr, ViewInArOutlined,
+  Dashboard, LocalShipping, ViewInAr,
+  Notifications, Menu as MenuIcon, Logout,
+  Radar, Inventory2, Gavel, ChevronLeft,
 } from '@mui/icons-material';
 import { useAuthStore } from '@/stores/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { notificationsApi } from '@/api/endpoints';
 
-const DRAWER_WIDTH = 260;
-const BROWN = '#8B3A0E';
-const BROWN_DARK = '#6D2D09';
+const DRAWER_WIDTH = 270;
+const DRAWER_COLLAPSED = 72;
 const ORANGE = '#E8700A';
+const BROWN = '#8B3A0E';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
+  { label: '3D Digital Twin', icon: <ViewInAr />, path: '/digital-twin', featured: true },
+  { label: 'Inbound Yard & Docks', icon: <Radar />, path: '/inbound-yard' },
+  { label: 'Storage Optimization', icon: <Inventory2 />, path: '/storage-optimization' },
+  { label: 'SLA & Resource Ledger', icon: <Gavel />, path: '/sla-ledger' },
   { label: 'Incoming Shipments', icon: <LocalShipping />, path: '/shipments' },
-  { label: 'Dock Management', icon: <Anchor />, path: '/docks' },
-  { label: 'Dock Recommendations', icon: <Recommend />, path: '/recommendations' },
-  {
-    path: '/digital-twin',
-    icon: <ViewInArOutlined />,
-    label: 'Smart Slotting',
-  },
-  { label: 'Detention Monitor', icon: <Warning />, path: '/detention' },
-  { label: 'Notifications', icon: <Notifications />, path: '/notifications' },
 ];
 
 export default function AppLayout() {
@@ -50,47 +46,60 @@ export default function AppLayout() {
   const currentLabel = NAV_ITEMS.find(n => location.pathname.startsWith(n.path))?.label || 'Dashboard';
 
   const drawerContent = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#FFFCF9', color: '#1A1A2E' }}>
+    <Box sx={{
+      display: 'flex', flexDirection: 'column', height: '100%',
+      background: 'linear-gradient(180deg, #FFFCF9 0%, #FFF8F2 100%)',
+      color: '#0F172A',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Decorative gradient orb */}
+      <Box sx={{
+        position: 'absolute', top: -40, right: -40, width: 120, height: 120,
+        borderRadius: '50%',
+        background: `radial-gradient(circle, ${alpha(ORANGE, 0.08)} 0%, transparent 70%)`,
+        pointerEvents: 'none',
+      }} />
+
       {/* Logo */}
       <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Box sx={{
-          width: 36, height: 36, borderRadius: '10px',
-          background: `linear-gradient(135deg, ${BROWN} 0%, ${ORANGE} 100%)`,
+          width: 40, height: 40, borderRadius: '12px',
+          background: `linear-gradient(135deg, ${ORANGE} 0%, ${BROWN} 100%)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 800, fontSize: 18, color: '#fff',
+          boxShadow: `0 4px 14px ${alpha(ORANGE, 0.3)}`,
+          flexShrink: 0,
         }}>
-          L
+          M
         </Box>
-        <Box>
-          <Typography variant="subtitle1" sx={{ color: BROWN, fontWeight: 800, lineHeight: 1.2, fontSize: '1rem' }}>
-            LogiMind AI
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{
+            fontWeight: 800, fontSize: '1.05rem', lineHeight: 1.2,
+            background: `linear-gradient(135deg, ${BROWN} 0%, ${ORANGE} 100%)`,
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
+            Marg WMS
           </Typography>
-          <Typography variant="caption" sx={{ color: '#9CA3AF', fontSize: '0.7rem' }}>
+          <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.65rem', letterSpacing: '0.04em' }}>
             Warehouse Portal
           </Typography>
         </Box>
+        {!isMobile && (
+          <IconButton
+            onClick={() => setDrawerOpen(false)}
+            size="small"
+            sx={{ ml: 'auto', color: '#94A3B8', '&:hover': { color: ORANGE } }}
+          >
+            <ChevronLeft fontSize="small" />
+          </IconButton>
+        )}
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(139,58,14,0.08)', mx: 2 }} />
-
-      {/* Digital Twin CTA */}
-      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
-        <ListItemButton
-          onClick={() => navigate('/digital-twin')}
-          sx={{
-            borderRadius: '12px', py: 1,
-            background: `linear-gradient(135deg, ${BROWN} 0%, ${BROWN_DARK} 100%)`,
-            color: '#fff',
-            '&:hover': { background: `linear-gradient(135deg, ${BROWN_DARK} 0%, #5A2307 100%)` },
-          }}
-        >
-          <ListItemIcon sx={{ color: '#fff', minWidth: 36 }}><ViewInAr /></ListItemIcon>
-          <ListItemText primary="Smart Slotting" primaryTypographyProps={{ fontWeight: 600, fontSize: '0.85rem' }} />
-        </ListItemButton>
-      </Box>
+      <Divider sx={{ borderColor: alpha(ORANGE, 0.06), mx: 2 }} />
 
       {/* Nav items */}
-      <List sx={{ px: 1.5, flex: 1, pt: 2 }}>
+      <List sx={{ px: 1.5, flex: 1, pt: 2, display: 'flex', flexDirection: 'column', gap: 0.3 }}>
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
@@ -98,16 +107,56 @@ export default function AppLayout() {
               key={item.path}
               onClick={() => { navigate(item.path); if (isMobile) setDrawerOpen(false); }}
               sx={{
-                borderRadius: '12px', mb: 0.5, py: 1,
-                bgcolor: isActive ? alpha(BROWN, 0.08) : 'transparent',
-                color: isActive ? BROWN : '#6B7280',
-                '&:hover': { bgcolor: alpha(BROWN, 0.05), color: BROWN },
+                borderRadius: '14px',
+                py: 1.1,
+                px: 1.5,
+                position: 'relative',
+                bgcolor: isActive ? alpha(ORANGE, 0.1) : 'transparent',
+                color: isActive ? ORANGE : '#64748B',
+                '&:hover': {
+                  bgcolor: alpha(ORANGE, 0.06),
+                  color: ORANGE,
+                },
+                transition: 'all 0.2s ease',
+                ...(item.featured && !isActive && {
+                  background: `linear-gradient(135deg, ${alpha(ORANGE, 0.05)} 0%, ${alpha(BROWN, 0.03)} 100%)`,
+                  border: `1px solid ${alpha(ORANGE, 0.1)}`,
+                }),
+                ...(isActive && {
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 3,
+                    height: '60%',
+                    borderRadius: '0 4px 4px 0',
+                    background: `linear-gradient(180deg, ${ORANGE} 0%, ${BROWN} 100%)`,
+                  },
+                }),
               }}
             >
-              <ListItemIcon sx={{ color: 'inherit', minWidth: 36 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: isActive ? 600 : 400 }} />
-              {item.label === 'Notifications' && unreadCount > 0 && (
-                <Badge badgeContent={unreadCount} color="error" sx={{ mr: 1 }} />
+              <ListItemIcon sx={{
+                color: 'inherit', minWidth: 36,
+                '& .MuiSvgIcon-root': { fontSize: item.featured ? '1.35rem' : '1.25rem' },
+              }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{
+                  fontSize: '0.83rem',
+                  fontWeight: isActive ? 700 : 500,
+                  letterSpacing: '-0.01em',
+                }}
+              />
+              {isActive && (
+                <Box sx={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  bgcolor: ORANGE,
+                  boxShadow: `0 0 8px ${alpha(ORANGE, 0.5)}`,
+                }} />
               )}
             </ListItemButton>
           );
@@ -115,21 +164,41 @@ export default function AppLayout() {
       </List>
 
       {/* User */}
-      <Divider sx={{ borderColor: 'rgba(139,58,14,0.08)', mx: 2 }} />
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Avatar sx={{ width: 34, height: 34, bgcolor: BROWN, fontSize: '0.85rem', fontWeight: 700 }}>
+      <Divider sx={{ borderColor: alpha(ORANGE, 0.06), mx: 2 }} />
+      <Box sx={{
+        p: 2, display: 'flex', alignItems: 'center', gap: 1.5,
+        m: 1.5, borderRadius: '14px',
+        bgcolor: alpha(ORANGE, 0.04),
+        border: `1px solid ${alpha(ORANGE, 0.06)}`,
+      }}>
+        <Avatar sx={{
+          width: 36, height: 36,
+          background: `linear-gradient(135deg, ${ORANGE} 0%, ${BROWN} 100%)`,
+          fontSize: '0.85rem', fontWeight: 700,
+          boxShadow: `0 2px 8px ${alpha(ORANGE, 0.25)}`,
+        }}>
           {user?.full_name?.charAt(0) || 'U'}
         </Avatar>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="body2" sx={{ color: '#1A1A2E', fontWeight: 600, fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Typography variant="body2" sx={{
+            color: '#0F172A', fontWeight: 600, fontSize: '0.8rem',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
             {user?.full_name}
           </Typography>
-          <Typography variant="caption" sx={{ color: '#9CA3AF', fontSize: '0.65rem' }}>
+          <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.65rem' }}>
             {user?.role?.replace(/_/g, ' ')}
           </Typography>
         </Box>
         <Tooltip title="Logout">
-          <IconButton size="small" onClick={logout} sx={{ color: '#9CA3AF', '&:hover': { color: '#EF4444' } }}>
+          <IconButton
+            size="small"
+            onClick={logout}
+            sx={{
+              color: '#94A3B8',
+              '&:hover': { color: '#EF4444', bgcolor: alpha('#EF4444', 0.08) },
+            }}
+          >
             <Logout fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -138,14 +207,18 @@ export default function AppLayout() {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#FAF9F7' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#FBF9F7' }}>
       <Drawer
         variant={isMobile ? 'temporary' : 'persistent'}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         sx={{
           width: DRAWER_WIDTH, flexShrink: 0,
-          '& .MuiDrawer-paper': { width: DRAWER_WIDTH, border: 'none', boxShadow: '2px 0 12px rgba(139,58,14,0.06)' },
+          '& .MuiDrawer-paper': {
+            width: DRAWER_WIDTH,
+            border: 'none',
+            boxShadow: '2px 0 24px rgba(139, 58, 14, 0.04)',
+          },
         }}
       >
         {drawerContent}
@@ -158,31 +231,67 @@ export default function AppLayout() {
           display: 'flex',
           flexDirection: 'column',
           width: isMobile ? '100%' : `calc(100% - ${drawerOpen ? DRAWER_WIDTH : 0}px)`,
-          transition: 'width 0.3s',
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           minWidth: 0,
         }}
       >
-        <AppBar position="sticky" elevation={0} sx={{ bgcolor: '#FFFCF9', borderBottom: '1px solid rgba(139,58,14,0.06)' }}>
-          <Toolbar sx={{ gap: 2 }}>
-            {isMobile && (
-              <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: '#1A1A2E' }}>
+        <AppBar
+          position="sticky"
+          elevation={0}
+          sx={{
+            bgcolor: alpha('#FFFCF9', 0.85),
+            backdropFilter: 'blur(12px)',
+            borderBottom: `1px solid ${alpha(ORANGE, 0.06)}`,
+          }}
+        >
+          <Toolbar sx={{ gap: 2, minHeight: '64px !important' }}>
+            {(isMobile || !drawerOpen) && (
+              <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: '#0F172A' }}>
                 <MenuIcon />
               </IconButton>
             )}
-            <Typography variant="h6" sx={{ flex: 1, color: '#1A1A2E', fontWeight: 700 }}>
-              {currentLabel}
-            </Typography>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="h6" sx={{ color: '#0F172A', fontWeight: 700, fontSize: '1.15rem' }}>
+                {currentLabel}
+              </Typography>
+            </Box>
             <Tooltip title="Notifications">
-              <IconButton onClick={() => navigate('/notifications')} sx={{ color: '#6B7280' }}>
-                <Badge badgeContent={unreadCount} color="error">
+              <IconButton sx={{
+                color: '#64748B',
+                '&:hover': { color: ORANGE, bgcolor: alpha(ORANGE, 0.06) },
+              }}>
+                <Badge
+                  badgeContent={unreadCount}
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      bgcolor: ORANGE,
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '0.65rem',
+                    },
+                  }}
+                >
                   <Notifications />
                 </Badge>
               </IconButton>
             </Tooltip>
+            <Avatar sx={{
+              width: 36, height: 36,
+              background: `linear-gradient(135deg, ${ORANGE} 0%, ${BROWN} 100%)`,
+              fontSize: '0.8rem', fontWeight: 700,
+              cursor: 'pointer',
+              border: `2px solid ${alpha(ORANGE, 0.2)}`,
+            }}>
+              {user?.full_name?.charAt(0) || 'U'}
+            </Avatar>
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ flex: 1, p: { xs: 1.5, md: 2.5 }, overflow: 'auto' }}>
+        <Box sx={{
+          flex: 1,
+          p: { xs: 2, md: 3 },
+          overflow: 'auto',
+        }}>
           <Outlet />
         </Box>
       </Box>

@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Html, TransformControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { RackData, ShelfData, ParcelData } from '@/stores/slottingStore';
 import { useSlottingStore } from '@/stores/slottingStore';
+import { slottingApi } from '@/api/endpoints';
 
 function densityColor(u: number) {
   if (u < 0.3) return '#22C55E';
@@ -26,33 +27,50 @@ export default function SlottingRack3D({ config, parcels, showDensity }: Props) 
   const { shelf_width: w, shelf_height: sh, shelf_depth: d, num_shelves } = config;
   const totalHeight = sh * num_shelves;
 
-  return (
-    <>
-      {viewMode === 'editor' && isSelected && (
-        <TransformControls
-          object={groupRef}
-          mode="translate"
-          showY={false}
-          onMouseUp={() => {
-            if (groupRef.current) {
-              updateRackPosition(config.rack_id, groupRef.current.position.x, groupRef.current.position.z);
-            }
-          }}
-        />
-      )}
-      <group ref={groupRef} position={[config.x_position, 0, config.z_position]}>
-      {/* Posts */}
+  const [transformRef, setTransformRef] = useState<any>(null);
+
+  // Safely bind to the native dragging-changed event of TransformControls
+  useEffect(() => {
+    if (!transformRef) return;
+    const handleDrag = (event: any) => {
+      // event.value is true when drag starts, false when drag ends
+      if (!event.value && groupRef.current) {
+        const newX = groupRef.current.position.x;
+        const newZ = groupRef.current.position.z;
+        updateRackPosition(config.rack_id, newX, newZ);
+      }
+    };
+    transformRef.addEventListener('dragging-changed', handleDrag);
+    return () => transformRef.removeEventListener('dragging-changed', handleDrag);
+  }, [transformRef, config.rack_id, updateRackPosition]);
+
+  const content = (
+      <group>
+      {/* Posts — Blue uprights like real pallet racking */}
       {[
         [-w / 2, -d / 2],
         [-w / 2, d / 2],
         [w / 2, -d / 2],
         [w / 2, d / 2],
       ].map(([px, pz], i) => (
-        <mesh key={i} position={[px, totalHeight / 2, pz]}>
-          <boxGeometry args={[0.08, totalHeight, 0.08]} />
-          <meshStandardMaterial color="#475569" />
+        <mesh key={i} position={[px, totalHeight / 2, pz]} castShadow>
+          <boxGeometry args={[0.1, totalHeight, 0.1]} />
+          <meshStandardMaterial color="#1E40AF" metalness={0.6} roughness={0.3} />
         </mesh>
       ))}
+
+      {/* Diagonal cross-braces on front face for structural realism */}
+      {Array.from({ length: num_shelves }).map((_, i) => {
+        const y1 = i * sh;
+        const y2 = (i + 1) * sh;
+        const midY = (y1 + y2) / 2;
+        return (
+          <mesh key={`brace-${i}`} position={[0, midY, -d / 2]} rotation={[0, 0, Math.PI / 4 * (i % 2 === 0 ? 1 : -1)]}>
+            <boxGeometry args={[0.03, sh * 1.1, 0.03]} />
+            <meshStandardMaterial color="#F59E0B" metalness={0.5} roughness={0.4} />
+          </mesh>
+        );
+      })}
 
       {/* Shelves */}
       {config.shelves.map((shelf) => {
@@ -67,23 +85,10 @@ export default function SlottingRack3D({ config, parcels, showDensity }: Props) 
         return (
           <group key={shelf.id}>
             {/* Shelf platform */}
-            <mesh position={[0, sy, 0]}>
-              <boxGeometry args={[w, 0.05, d]} />
-              <meshStandardMaterial color="#64748B" />
+            <mesh position={[0, sy, 0]} castShadow receiveShadow>
+              <boxGeometry args={[w, 0.06, d]} />
+              <meshStandardMaterial color={showDensity && util > 0 ? color : "#E8700A"} metalness={0.5} roughness={0.35} />
             </mesh>
-
-            {/* Utilization fill */}
-            {util > 0 && (
-              <mesh position={[0, sy + 0.05 + (sh * 0.8 * Math.min(util, 1)) / 2, 0]}>
-                <boxGeometry args={[w * 0.9, sh * 0.8 * Math.min(util, 1), d * 0.9]} />
-                <meshStandardMaterial
-                  color={color}
-                  transparent
-                  opacity={hovered || isSelected || isShelfSelected ? 0.3 : 0.15}
-                  depthWrite={false}
-                />
-              </mesh>
-            )}
 
             {/* Individual parcels */}
             {shelfParcels.map((parcel, pi) => {
@@ -94,18 +99,36 @@ export default function SlottingRack3D({ config, parcels, showDensity }: Props) 
               
               // Place them sequentially along the shelf (simple linear layout for visual)
               const px = -w / 2 + pw / 2 + 0.1 + (pi * (pw + 0.1));
-              const py = sy + 0.025 + ph / 2; // Resting on the shelf platform
+              const py = sy + 0.03 + ph / 2; // Resting on the shelf platform
               const isParcelSelected =
                 useSlottingStore.getState().selectedParcel?.id === parcel.id;
 
               return (
                 <group key={parcel.id} position={[Math.min(px, w/2 - pw/2), py, 0]}>
-                  <mesh>
+                  <mesh
+                    castShadow
+                    receiveShadow
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      useSlottingStore.getState().selectRack(config.rack_id);
+                      useSlottingStore.getState().selectShelf(shelf.id);
+                      useSlottingStore.getState().selectParcel(parcel);
+                    }}
+                    onPointerOver={(e) => {
+                      e.stopPropagation();
+                      document.body.style.cursor = 'pointer';
+                    }}
+                    onPointerOut={() => {
+                      document.body.style.cursor = 'auto';
+                    }}
+                  >
                     <boxGeometry args={[pw, ph, pd]} />
                     <meshStandardMaterial
-                      color={isParcelSelected ? '#E8700A' : '#8B3A0E'}
-                      emissive={isParcelSelected ? '#E8700A' : '#000000'}
-                      emissiveIntensity={isParcelSelected ? 0.5 : 0}
+                      color={isParcelSelected ? '#FBBF24' : (parcel.color || '#C28E5F')}
+                      roughness={0.9}
+                      metalness={0.0}
+                      emissive={isParcelSelected ? '#FBBF24' : '#000000'}
+                      emissiveIntensity={isParcelSelected ? 0.3 : 0}
                     />
                   </mesh>
                 </group>
@@ -222,7 +245,23 @@ export default function SlottingRack3D({ config, parcels, showDensity }: Props) 
           </div>
         </Html>
       )}
-    </group>
+      </group>
+  );
+
+  return (
+    <>
+      {viewMode === 'editor' && isSelected && (
+        <TransformControls
+          ref={setTransformRef}
+          object={groupRef as any}
+          mode="translate"
+          showY={false}
+          size={1.2}
+        />
+      )}
+      <group ref={groupRef} position={[config.x_position, 0, config.z_position]}>
+         {content}
+      </group>
     </>
   );
 }

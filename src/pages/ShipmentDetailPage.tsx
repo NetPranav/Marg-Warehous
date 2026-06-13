@@ -1,11 +1,13 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, Grid2 as Grid, Chip, Stepper, Step,
-  StepLabel, StepContent, CircularProgress, alpha, Button,
+  StepLabel, StepContent, CircularProgress, alpha, Button, IconButton,
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AccessTime, LocalShipping, LocationOn, Speed } from '@mui/icons-material';
+import { AccessTime, LocalShipping, LocationOn, Speed, ArrowBack } from '@mui/icons-material';
 import { shipmentsApi } from '@/api/endpoints';
+
+const ORANGE = '#E8700A';
 
 const STATUS_ORDER = [
   'CREATED', 'READY_FOR_ASSIGNMENT', 'TRUCK_ASSIGNED', 'DRIVER_ASSIGNED',
@@ -15,6 +17,7 @@ const STATUS_ORDER = [
 
 export default function ShipmentDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const shipmentId = Number(id);
 
@@ -55,6 +58,16 @@ export default function ShipmentDetailPage() {
 
   return (
     <Box>
+      {/* Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <IconButton onClick={() => navigate('/shipments')} sx={{ color: '#64748B', '&:hover': { color: ORANGE } }}>
+          <ArrowBack />
+        </IconButton>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0F172A' }}>Shipment Details</Typography>
+          <Typography variant="body2" sx={{ color: '#94A3B8' }}>{s.shipment_number}</Typography>
+        </Box>
+      </Box>
       <Grid container spacing={2}>
         {/* Left: Details */}
         <Grid size={{ xs: 12, md: 7 }}>
@@ -62,12 +75,12 @@ export default function ShipmentDetailPage() {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6">{s.shipment_number}</Typography>
-                <Chip label={s.status?.replace(/_/g, ' ')} sx={{ bgcolor: alpha('#8B3A0E', 0.1), color: '#8B3A0E', fontWeight: 700 }} />
+                <Chip label={s.status?.replace(/_/g, ' ')} sx={{ bgcolor: alpha(ORANGE, 0.1), color: ORANGE, fontWeight: 700 }} />
               </Box>
 
               <Grid container spacing={2}>
                 {[
-                  { icon: <LocalShipping sx={{ color: '#8B3A0E' }} />, label: 'Type', value: s.shipment_type?.replace(/_/g, ' ') },
+                  { icon: <LocalShipping sx={{ color: ORANGE }} />, label: 'Type', value: s.shipment_type?.replace(/_/g, ' ') },
                   { icon: <Speed sx={{ color: '#F59E0B' }} />, label: 'Priority', value: s.priority },
                   { icon: <LocationOn sx={{ color: '#EF4444' }} />, label: 'From', value: s.factory_name },
                   { icon: <LocationOn sx={{ color: '#22C55E' }} />, label: 'To', value: s.warehouse_name },
@@ -88,12 +101,12 @@ export default function ShipmentDetailPage() {
 
           {/* ETA */}
           {eta && (
-            <Card sx={{ mb: 2, border: '1px solid', borderColor: alpha('#8B3A0E', 0.2) }}>
+            <Card sx={{ mb: 2, border: '1px solid', borderColor: alpha(ORANGE, 0.2) }}>
               <CardContent>
                 <Typography variant="subtitle1" sx={{ mb: 2 }}>Live ETA Prediction</Typography>
                 <Grid container spacing={2}>
                   {[
-                    { label: 'Distance Left', value: `${eta.remaining_distance_km} km`, color: '#8B3A0E' },
+                    { label: 'Distance Left', value: `${eta.remaining_distance_km} km`, color: ORANGE },
                     { label: 'Confidence', value: `${(eta.confidence * 100).toFixed(0)}%`, color: '#3B82F6' },
                     { label: 'Delay Risk', value: `${(eta.delay_probability * 100).toFixed(0)}%`, color: eta.delay_probability > 0.5 ? '#EF4444' : '#22C55E' },
                   ].map((item) => (
@@ -144,7 +157,7 @@ export default function ShipmentDetailPage() {
                   {timeline.map((event: any, i: number) => (
                     <Step key={i} completed>
                       <StepLabel
-                        StepIconProps={{ sx: { color: '#8B3A0E' } }}
+                        StepIconProps={{ sx: { color: ORANGE } }}
                       >
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{event.event_type?.replace(/_/g, ' ')}</Typography>
                       </StepLabel>

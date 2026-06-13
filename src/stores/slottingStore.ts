@@ -61,6 +61,7 @@ export interface ParcelData {
   special_handling: string;
   position_label: string;
   status: string;
+  color?: string;
 }
 
 export interface LayoutData {
@@ -174,7 +175,8 @@ export const useSlottingStore = create<SlottingState>()((set, get) => ({
   setViewMode: (mode) => set({ viewMode: mode }),
   setShowDensity: (v) => set({ showDensity: v }),
   setShowHeatmap: (v) => set({ showHeatmap: v }),
-  setFilterDestination: (d) => set({ filterDestination: d }),
+  setSearchQuery: (q) => set({ searchQuery: q }),
+  setFilterDestination: (d: any) => set({ filterDestination: d }),
   setFilterStatus: (s) => set({ filterStatus: s }),
 
   updateRackPosition: (rackId, x, z) => {
