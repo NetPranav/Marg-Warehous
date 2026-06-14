@@ -1,3 +1,4 @@
+
 import { Box, Typography, Tooltip, alpha } from '@mui/material';
 import { useSlottingStore, RackData, DockData } from '@/stores/slottingStore';
 
@@ -13,9 +14,9 @@ const getUtilizationColor = (rack: RackData) => {
     totalVol += s.total_volume;
     occVol += s.occupied_volume;
   });
-  
+
   const pct = totalVol > 0 ? (occVol / totalVol) * 100 : 0;
-  
+
   if (pct >= 90) return '#EF4444'; // Red
   if (pct >= 75) return '#E8700A'; // Orange
   if (pct >= 50) return '#F59E0B'; // Yellow
@@ -35,7 +36,9 @@ export default function WarehouseMiniMap({ onRackClick, highlightedRackId }: Pro
 
   // Adjust SVG viewbox to add some padding
   const padding = 2;
-  const viewBox = `-${padding} -${padding} ${layout.width + padding * 2} ${layout.depth + padding * 2}`;
+  const layoutWidth = Number(layout.width);
+  const layoutDepth = Number(layout.depth);
+  const viewBox = `-${padding} -${padding} ${layoutWidth + padding * 2} ${layoutDepth + padding * 2}`;
 
   return (
     <Box sx={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
@@ -45,10 +48,10 @@ export default function WarehouseMiniMap({ onRackClick, highlightedRackId }: Pro
         preserveAspectRatio="xMidYMid meet"
       >
         {/* Draw Warehouse Floor / Border */}
-        <rect 
-          x={0} y={0} width={layout.width} height={layout.depth} 
-          fill="#F1F5F9" 
-          stroke="#CBD5E1" 
+        <rect
+          x={0} y={0} width={layoutWidth} height={layoutDepth}
+          fill="#F1F5F9"
+          stroke="#CBD5E1"
           strokeWidth={0.2}
           rx={0.5}
         />
@@ -56,23 +59,25 @@ export default function WarehouseMiniMap({ onRackClick, highlightedRackId }: Pro
         {/* Draw Docks/Gates */}
         {(layout.dock_bays || []).map((dock: DockData) => {
           if (dock.x_position === null || dock.z_position === null) return null;
+          const dx = Number(dock.x_position);
+          const dz = Number(dock.z_position);
           return (
             <g key={`dock-${dock.id}`}>
-              <rect 
-                x={dock.x_position - 1} 
-                y={dock.z_position - 1} 
-                width={2} 
-                height={2} 
+              <rect
+                x={dx - 1}
+                y={dz - 1}
+                width={2}
+                height={2}
                 fill={alpha('#3B82F6', 0.2)}
                 stroke="#3B82F6"
                 strokeWidth={0.2}
               />
-              <text 
-                x={dock.x_position} 
-                y={dock.z_position + 0.3} 
-                fontSize={0.6} 
-                fill="#1E40AF" 
-                textAnchor="middle" 
+              <text
+                x={dx}
+                y={dz + 0.3}
+                fontSize={0.6}
+                fill="#1E40AF"
+                textAnchor="middle"
                 fontWeight="bold"
               >
                 {dock.dock_number}
@@ -85,13 +90,15 @@ export default function WarehouseMiniMap({ onRackClick, highlightedRackId }: Pro
         {(layout.racks || []).map((rack: RackData) => {
           // Rack dimensions are roughly based on shelf_width and depth, plus some padding.
           // In the 3D map we might use different scales, but we'll approximate here:
-          const rWidth = rack.shelf_width || 2;
-          const rDepth = rack.shelf_depth || 1;
+          const rWidth = Number(rack.shelf_width) || 2;
+          const rDepth = Number(rack.shelf_depth) || 1;
+          const rx = Number(rack.x_position);
+          const rz = Number(rack.z_position);
           const isHighlighted = highlightedRackId === rack.rack_id;
           const color = getUtilizationColor(rack);
 
           return (
-            <Tooltip 
+            <Tooltip
               key={`rack-${rack.id}`}
               title={
                 <Box sx={{ p: 0.5 }}>
@@ -102,8 +109,8 @@ export default function WarehouseMiniMap({ onRackClick, highlightedRackId }: Pro
               arrow
             >
               <rect
-                x={rack.x_position - rWidth / 2}
-                y={rack.z_position - rDepth / 2}
+                x={rx - rWidth / 2}
+                y={rz - rDepth / 2}
                 width={rWidth}
                 height={rDepth}
                 fill={isHighlighted ? alpha(color, 0.8) : color}
@@ -111,8 +118,8 @@ export default function WarehouseMiniMap({ onRackClick, highlightedRackId }: Pro
                 strokeWidth={isHighlighted ? 0.3 : 0.1}
                 rx={0.2}
                 onClick={() => onRackClick?.(rack)}
-                style={{ 
-                  cursor: 'pointer', 
+                style={{
+                  cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   filter: isHighlighted ? 'drop-shadow(0 0 1px rgba(0,0,0,0.5))' : 'none'
                 }}

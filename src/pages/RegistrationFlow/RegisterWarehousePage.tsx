@@ -226,7 +226,7 @@ export default function RegisterWarehousePage() {
             Onboard Your Warehouse
           </Typography>
           <Typography variant="body2" sx={{ color: '#94A3B8', mt: 0.5 }}>
-            Join the LogiMind Global Network
+            Join the Marg Global Network
           </Typography>
         </Box>
         

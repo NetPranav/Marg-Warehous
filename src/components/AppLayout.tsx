@@ -133,7 +133,7 @@ export default function AppLayout() {
             background: `linear-gradient(135deg, ${BROWN} 0%, ${ORANGE} 100%)`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>
-            Marg WMS
+            Marg
           </Typography>
           <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.65rem', letterSpacing: '0.04em' }}>
             {user?.organization_name || 'Warehouse Portal'}

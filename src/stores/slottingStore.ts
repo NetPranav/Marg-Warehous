@@ -120,9 +120,12 @@ interface SlottingState {
 
   // Selection
   selectedParcel: ParcelData | null;
+  selectedParcelIds: string[];
   selectedRackId: string | null;
   selectedShelfId: number | null;
   highlightPath: HighlightPath | null;
+
+  mapControlsRef: any;
 
   // View state
   viewMode: ViewMode;
@@ -137,8 +140,10 @@ interface SlottingState {
   setParcels: (parcels: ParcelData[]) => void;
   setRecommendations: (recs: Recommendation[]) => void;
   selectParcel: (parcel: ParcelData | null) => void;
+  toggleParcelSelection: (parcelId: string) => void;
   selectRack: (rackId: string | null) => void;
   selectShelf: (shelfId: number | null) => void;
+  setMapControlsRef: (ref: any) => void;
   setHighlightPath: (path: HighlightPath | null) => void;
   setViewMode: (mode: ViewMode) => void;
   setShowDensity: (v: boolean) => void;
@@ -155,9 +160,11 @@ export const useSlottingStore = create<SlottingState>()((set, get) => ({
   parcels: [],
   recommendations: [],
   selectedParcel: null,
+  selectedParcelIds: [],
   selectedRackId: null,
   selectedShelfId: null,
   highlightPath: null,
+  mapControlsRef: null,
   viewMode: 'visualization',
   showDensity: true,
   showHeatmap: false,
@@ -169,8 +176,17 @@ export const useSlottingStore = create<SlottingState>()((set, get) => ({
   setParcels: (parcels) => set({ parcels }),
   setRecommendations: (recs) => set({ recommendations: recs }),
   selectParcel: (parcel) => set({ selectedParcel: parcel }),
+  toggleParcelSelection: (parcelId) => {
+    const { selectedParcelIds } = get();
+    if (selectedParcelIds.includes(parcelId)) {
+      set({ selectedParcelIds: selectedParcelIds.filter(id => id !== parcelId) });
+    } else {
+      set({ selectedParcelIds: [...selectedParcelIds, parcelId] });
+    }
+  },
   selectRack: (rackId) => set({ selectedRackId: rackId }),
   selectShelf: (shelfId) => set({ selectedShelfId: shelfId }),
+  setMapControlsRef: (ref) => set({ mapControlsRef: ref }),
   setHighlightPath: (path) => set({ highlightPath: path }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setShowDensity: (v) => set({ showDensity: v }),
@@ -236,6 +252,7 @@ export const useSlottingStore = create<SlottingState>()((set, get) => ({
   clearSelection: () =>
     set({
       selectedParcel: null,
+      selectedParcelIds: [],
       selectedRackId: null,
       selectedShelfId: null,
       highlightPath: null,

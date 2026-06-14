@@ -6,6 +6,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AccessTime, LocalShipping, LocationOn, Speed, ArrowBack } from '@mui/icons-material';
 import { shipmentsApi } from '@/api/endpoints';
+import CoordinationPanel from '@/components/chat/CoordinationPanel';
 
 const ORANGE = '#E8700A';
 
@@ -122,29 +123,7 @@ export default function ShipmentDetailPage() {
             </Card>
           )}
 
-          {/* Actions */}
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle1" sx={{ mb: 2 }}>Warehouse Actions</Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {['DISPATCHED', 'IN_TRANSIT'].includes(s.status) && (
-                  <Button variant="contained" onClick={() => arrivalMut.mutate()} disabled={arrivalMut.isPending}>
-                    Mark Arrived
-                  </Button>
-                )}
-                {s.status === 'ARRIVED_AT_GATE' && (
-                  <Button variant="contained" onClick={() => unloadMut.mutate()} disabled={unloadMut.isPending}>
-                    Start Receiving
-                  </Button>
-                )}
-                {s.status === 'RECEIVING_IN_PROGRESS' && (
-                  <Button variant="contained" color="success" onClick={() => completeMut.mutate()} disabled={completeMut.isPending}>
-                    Complete Shipment
-                  </Button>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
+          <CoordinationPanel shipment={s} onUpdate={invalidate} />
         </Grid>
 
         {/* Right: Timeline */}

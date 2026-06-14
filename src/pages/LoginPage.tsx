@@ -85,7 +85,7 @@ export default function LoginPage() {
             background: `linear-gradient(135deg, ${BROWN} 0%, ${ORANGE} 100%)`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>
-            Marg WMS
+            Marg
           </Typography>
           <Typography variant="body2" sx={{ mt: 0.5, color: '#94A3B8' }}>
             Sign in to manage warehouse operations

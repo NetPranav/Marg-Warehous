@@ -382,14 +382,14 @@ export default function DashboardPage() {
         </Grid>
       </Grid>
 
-      {/* Incoming Shipments Preview */}
+      {/* Incoming Vehicles Preview */}
       <Card sx={{ overflow: 'hidden', mt: 3 }}>
         <Box sx={{
           px: 3, py: 2,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           borderBottom: '1px solid rgba(0,0,0,0.04)',
         }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Latest Incoming Shipments</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Incoming Vehicles</Typography>
           <Chip
             label="View All →"
             onClick={() => navigate('/shipments')}
@@ -403,55 +403,62 @@ export default function DashboardPage() {
         <Box sx={{ p: 2.5 }}>
           {incomingShipments.length === 0 ? (
             <Typography variant="body2" sx={{ color: '#94A3B8', py: 4, textAlign: 'center' }}>
-              No incoming shipments right now
+              No incoming vehicles right now
             </Typography>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {incomingShipments.map((s: any, i: number) => (
-                <Box
-                  key={s.id}
-                  onClick={() => navigate(`/shipments/${s.id}`)}
-                  sx={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    p: 1.5, borderRadius: '12px', cursor: 'pointer',
-                    bgcolor: 'rgba(0,0,0,0.015)',
-                    border: '1px solid transparent',
-                    transition: 'all 0.2s ease',
-                    animation: `fadeInUp 0.3s ease-out ${i * 0.05}s both`,
-                    '&:hover': {
-                      bgcolor: alpha(ORANGE, 0.03),
-                      borderColor: alpha(ORANGE, 0.1),
-                      transform: 'translateX(4px)',
-                    },
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{
-                      width: 36, height: 36, borderRadius: '10px',
-                      bgcolor: alpha(ORANGE, 0.08), display: 'flex',
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <LocalShipping sx={{ fontSize: 18, color: ORANGE }} />
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontWeight: 600, color: '#0F172A', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                        {s.shipment_number}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#94A3B8' }}>
-                        {s.factory_name} → {s.warehouse_name}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Chip
-                    label={s.status?.replace(/_/g, ' ')}
-                    size="small"
+              {incomingShipments.map((s: any, i: number) => {
+                // Determine color coding based on status or delay
+                let statusColor = '#22C55E'; // Green
+                if (s.status === 'DELAYED' || s.delay_minutes > 15) statusColor = '#EF4444'; // Red
+                else if (s.delay_minutes > 0) statusColor = '#F59E0B'; // Yellow
+
+                return (
+                  <Box
+                    key={s.id}
+                    onClick={() => navigate(`/shipments/${s.id}`)}
                     sx={{
-                      bgcolor: alpha(ORANGE, 0.08), color: ORANGE,
-                      fontWeight: 600, fontSize: '0.68rem',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      p: 1.5, borderRadius: '12px', cursor: 'pointer',
+                      bgcolor: 'rgba(0,0,0,0.015)',
+                      border: '1px solid transparent',
+                      transition: 'all 0.2s ease',
+                      animation: `fadeInUp 0.3s ease-out ${i * 0.05}s both`,
+                      '&:hover': {
+                        bgcolor: alpha(statusColor, 0.03),
+                        borderColor: alpha(statusColor, 0.1),
+                        transform: 'translateX(4px)',
+                      },
                     }}
-                  />
-                </Box>
-              ))}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{
+                        width: 36, height: 36, borderRadius: '10px',
+                        bgcolor: alpha(statusColor, 0.08), display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <LocalShipping sx={{ fontSize: 18, color: statusColor }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.85rem' }}>
+                          {s.truck_number || 'TRK-UNKNOWN'} • {s.driver_name || 'Unassigned Driver'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#94A3B8' }}>
+                          Shipment: {s.shipment_number} | ETA: {s.expected_arrival_time ? new Date(s.expected_arrival_time).toLocaleTimeString() : 'Pending'} | Dock: {s.assigned_dock || 'Unassigned'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Chip
+                      label={s.status?.replace(/_/g, ' ')}
+                      size="small"
+                      sx={{
+                        bgcolor: alpha(statusColor, 0.08), color: statusColor,
+                        fontWeight: 600, fontSize: '0.68rem',
+                      }}
+                    />
+                  </Box>
+                );
+              })}
             </Box>
           )}
         </Box>
