@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Box, Typography, Card, CardContent, Grid, Button, Checkbox, FormControlLabel, TextField, alpha } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Box, Typography, Card, CardContent, Grid, Button, Checkbox, FormControlLabel, TextField, alpha, Alert } from '@mui/material';
 import { MeetingRoom, LocalShipping, Person, QrCode, Badge, FolderOpen } from '@mui/icons-material';
+import { shipmentsApi } from '@/api/endpoints';
 
 const ORANGE = '#E8700A';
 
@@ -15,11 +16,41 @@ const CHECKLIST_ITEMS = [
 export default function GateCheckInPage() {
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [vehicleId, setVehicleId] = useState('');
+  const [shipments, setShipments] = useState<any[]>([]);
+  const [foundShipment, setFoundShipment] = useState<any>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    shipmentsApi.list().then(res => {
+      setShipments(Array.isArray(res.data) ? res.data : res.data.results || []);
+    }).catch(err => console.error(err));
+  }, []);
+
+  const handlePullRecords = () => {
+    const found = shipments.find(s => 
+      s.truck_reg?.toLowerCase() === vehicleId.toLowerCase() && 
+      (s.status === 'ARRIVED_AT_WAREHOUSE' || s.status === 'WAITING_FOR_DOCK')
+    );
+    if (found) {
+      setFoundShipment(found);
+      setError('');
+    } else {
+      setFoundShipment(null);
+      setError('No pending shipment found for this vehicle plate.');
+    }
+  };
 
   const allChecked = CHECKLIST_ITEMS.every(item => checks[item.id]);
 
   const toggleCheck = (id: string) => {
     setChecks(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleApprove = () => {
+    alert("Vehicle verified and approved! Proceed to Inbound Yard to assign a dock.");
+    setVehicleId('');
+    setFoundShipment(null);
+    setChecks({});
   };
 
   return (
@@ -63,6 +94,7 @@ export default function GateCheckInPage() {
               <Button 
                 variant="contained" 
                 fullWidth 
+                onClick={handlePullRecords}
                 disabled={!vehicleId}
                 sx={{ bgcolor: '#0F172A', '&:hover': { bgcolor: '#1E293B' }, py: 1.5, fontWeight: 700, borderRadius: 2 }}
               >
@@ -73,8 +105,19 @@ export default function GateCheckInPage() {
         </Grid>
 
         <Grid item xs={12} md={7}>
-          <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', height: '100%', opacity: vehicleId ? 1 : 0.6, pointerEvents: vehicleId ? 'auto' : 'none' }}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', height: '100%', opacity: foundShipment ? 1 : 0.6, pointerEvents: foundShipment ? 'auto' : 'none' }}>
             <CardContent sx={{ p: 3 }}>
+              {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+              
+              {foundShipment && (
+                <Box sx={{ mb: 3, p: 2, bgcolor: alpha(ORANGE, 0.05), borderRadius: 2, border: `1px solid ${alpha(ORANGE, 0.2)}` }}>
+                  <Typography variant="subtitle2" sx={{ color: ORANGE, fontWeight: 700, mb: 1 }}>Shipment Found</Typography>
+                  <Typography variant="body2"><strong>Shipment ID:</strong> {foundShipment.shipment_number}</Typography>
+                  <Typography variant="body2"><strong>Driver:</strong> {foundShipment.driver_name}</Typography>
+                  <Typography variant="body2"><strong>Factory:</strong> {foundShipment.factory_name}</Typography>
+                </Box>
+              )}
+
               <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A', mb: 2 }}>
                 Verification Checklist
               </Typography>
@@ -110,6 +153,7 @@ export default function GateCheckInPage() {
                   <Button 
                     variant="contained" 
                     fullWidth 
+                    onClick={handleApprove}
                     disabled={!allChecked}
                     sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, py: 1.5, fontWeight: 700 }}
                   >

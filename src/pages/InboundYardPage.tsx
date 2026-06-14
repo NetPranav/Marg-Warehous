@@ -357,6 +357,12 @@ export default function InboundYardPage() {
     refetchInterval: 15000,
   });
 
+  const { data: shipmentData } = useQuery({
+    queryKey: ['shipments', 'inbound-active'],
+    queryFn: () => shipmentsApi.list(),
+    refetchInterval: 15000,
+  });
+
   const updateMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) => docksApi.update(id, { status }),
     onSuccess: () => {
@@ -375,9 +381,35 @@ export default function InboundYardPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dock-recommendations'] }),
   });
 
+  const reserveDockMut = useMutation({
+    mutationFn: ({ id, dockId }: { id: number; dockId: number }) => shipmentsApi.reserveDock(id, { dock_id: dockId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipments', 'inbound-active'] });
+      queryClient.invalidateQueries({ queryKey: ['docks'] });
+    },
+  });
+
+  const startUnloadingMut = useMutation({
+    mutationFn: (id: number) => shipmentsApi.startUnloading(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['shipments', 'inbound-active'] }),
+  });
+
+  const completeMut = useMutation({
+    mutationFn: (id: number) => shipmentsApi.complete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipments', 'inbound-active'] });
+      queryClient.invalidateQueries({ queryKey: ['docks'] });
+    },
+  });
+
   const docks = dockData?.data?.results ?? [];
   const recommendations = recData?.data?.results ?? [];
   const pendingRecs = recommendations.filter((r: any) => r.status === 'PENDING');
+  
+  const shipmentsList = Array.isArray(shipmentData?.data) ? shipmentData?.data : shipmentData?.data?.results || [];
+  const activeShipments = shipmentsList.filter((s: any) => 
+    ['APPROACHING_DESTINATION', 'ARRIVED_AT_GATE', 'RECEIVING_IN_PROGRESS', 'SLOTTING_IN_PROGRESS'].includes(s.status)
+  );
 
   const statusCounts = {
     AVAILABLE: docks.filter((d: any) => d.status === 'AVAILABLE').length,
@@ -582,6 +614,81 @@ export default function InboundYardPage() {
             </Grid>
           );
         })}
+      </Grid>
+
+      {/* Active Inbound Shipments */}
+      <Box sx={{ mt: 4, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+          Active Processing Shipments
+        </Typography>
+      </Box>
+      <Grid container spacing={2}>
+        {activeShipments.length === 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="body2" sx={{ color: '#94A3B8' }}>No shipments currently processing in the yard.</Typography>
+          </Grid>
+        )}
+        {activeShipments.map((s: any) => (
+          <Grid key={s.id} size={{ xs: 12, md: 6, lg: 4 }}>
+            <Card sx={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 2 }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{s.shipment_number}</Typography>
+                  <Chip 
+                    label={s.status.replace(/_/g, ' ')} 
+                    size="small" 
+                    sx={{ 
+                      bgcolor: s.status === 'WAITING_FOR_DOCK' ? alpha('#F59E0B', 0.1) : alpha('#3B82F6', 0.1),
+                      color: s.status === 'WAITING_FOR_DOCK' ? '#F59E0B' : '#3B82F6',
+                      fontWeight: 700, fontSize: '0.65rem'
+                    }} 
+                  />
+                </Box>
+                <Typography variant="body2" sx={{ color: '#64748B', mb: 0.5 }}><strong>Truck:</strong> {s.truck_reg || 'N/A'}</Typography>
+                <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}><strong>Factory:</strong> {s.factory_name}</Typography>
+
+                {s.status === 'WAITING_FOR_DOCK' && (
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <TextField 
+                      select 
+                      size="small" 
+                      fullWidth 
+                      label="Select Dock" 
+                      defaultValue=""
+                      onChange={(e) => reserveDockMut.mutate({ id: s.id, dockId: Number(e.target.value) })}
+                    >
+                      {docks.filter((d: any) => d.status === 'AVAILABLE').map((d: any) => (
+                        <MenuItem key={d.id} value={d.id}>Dock {d.dock_number}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+                )}
+                {s.status === 'DOCK_ASSIGNED' && (
+                  <Button 
+                    variant="contained" 
+                    fullWidth 
+                    onClick={() => startUnloadingMut.mutate(s.id)}
+                    disabled={startUnloadingMut.isPending}
+                    sx={{ bgcolor: '#3B82F6', '&:hover': { bgcolor: '#2563EB' } }}
+                  >
+                    Start Receiving
+                  </Button>
+                )}
+                {s.status === 'RECEIVING_IN_PROGRESS' && (
+                  <Button 
+                    variant="contained" 
+                    fullWidth 
+                    onClick={() => completeMut.mutate(s.id)}
+                    disabled={completeMut.isPending}
+                    sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' } }}
+                  >
+                    Complete Shipment
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
       {/* Edit Dialog */}

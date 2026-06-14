@@ -1,14 +1,25 @@
 import { useState } from 'react';
 import { Box, Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, Menu, MenuItem, Tooltip, alpha } from '@mui/material';
 import { MoreVert, CheckCircle, Schedule, ErrorOutline, InfoOutlined } from '@mui/icons-material';
-
-const MOCK_ARRIVALS: any[] = [];
+import { useQuery } from '@tanstack/react-query';
+import { shipmentsApi } from '@/api/endpoints';
 
 const ORANGE = '#E8700A';
 
 export default function ArrivalSchedulePage() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['arrival-schedule'],
+    queryFn: () => shipmentsApi.list({
+      status__in: 'READY_FOR_ASSIGNMENT,READY_FOR_DISPATCH,DOCK_RESERVED,DISPATCHED,IN_TRANSIT,ARRIVED_AT_WAREHOUSE',
+      page_size: 50,
+    }),
+    refetchInterval: 15000,
+  });
+
+  const shipments = data?.data?.results || [];
 
   const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
     setAnchorEl(event.currentTarget);
@@ -47,21 +58,29 @@ export default function ArrivalSchedulePage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {MOCK_ARRIVALS.map((row) => (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center">Loading arrival schedule...</TableCell>
+                </TableRow>
+              ) : shipments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center">No upcoming arrivals scheduled.</TableCell>
+                </TableRow>
+              ) : shipments.map((row: any) => (
                 <TableRow key={row.id} hover>
-                  <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace' }}>{row.id}</TableCell>
-                  <TableCell>{row.factory}</TableCell>
-                  <TableCell sx={{ fontWeight: 500 }}>{row.eta}</TableCell>
-                  <TableCell>{row.lots}</TableCell>
-                  <TableCell>{row.partner}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace' }}>{row.shipment_number}</TableCell>
+                  <TableCell>{row.factory_name}</TableCell>
+                  <TableCell sx={{ fontWeight: 500 }}>{row.eta || 'Pending'}</TableCell>
+                  <TableCell>{row.lot_number || 'N/A'}</TableCell>
+                  <TableCell>{row.logistics_provider_name || 'Pending'}</TableCell>
                   <TableCell>
                     <Chip 
                       size="small" 
-                      label={row.dockStatus} 
-                      icon={row.dockStatus.includes('Recommended') ? <CheckCircle fontSize="small"/> : <Schedule fontSize="small"/>}
+                      label={row.status === 'WAITING_FOR_DOCK' ? 'Needs Dock' : (row.dock_number || 'Pending')} 
+                      icon={row.dock_number ? <CheckCircle fontSize="small"/> : <Schedule fontSize="small"/>}
                       sx={{ 
-                        bgcolor: row.dockStatus.includes('Recommended') ? alpha('#22C55E', 0.1) : alpha('#F59E0B', 0.1),
-                        color: row.dockStatus.includes('Recommended') ? '#22C55E' : '#F59E0B',
+                        bgcolor: row.dock_number ? alpha('#22C55E', 0.1) : alpha('#F59E0B', 0.1),
+                        color: row.dock_number ? '#22C55E' : '#F59E0B',
                         fontWeight: 600
                       }} 
                     />
@@ -71,8 +90,8 @@ export default function ArrivalSchedulePage() {
                       size="small" 
                       label={row.status} 
                       sx={{ 
-                        bgcolor: row.status === 'APPROVED' ? alpha(ORANGE, 0.1) : alpha('#94A3B8', 0.1),
-                        color: row.status === 'APPROVED' ? ORANGE : '#64748B',
+                        bgcolor: ['ARRIVED_AT_GATE', 'RECEIVING_IN_PROGRESS'].includes(row.status) ? alpha(ORANGE, 0.1) : alpha('#94A3B8', 0.1),
+                        color: ['ARRIVED_AT_GATE', 'RECEIVING_IN_PROGRESS'].includes(row.status) ? ORANGE : '#64748B',
                         fontWeight: 700
                       }} 
                     />

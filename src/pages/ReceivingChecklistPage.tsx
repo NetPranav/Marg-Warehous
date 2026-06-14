@@ -76,7 +76,7 @@ export default function ReceivingChecklistPage() {
           <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', height: '100%', opacity: shipmentId ? 1 : 0.6, pointerEvents: shipmentId ? 'auto' : 'none' }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A', mb: 2 }}>
-                Unloading Verification
+                Receiving Verification
               </Typography>
               
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 4 }}>

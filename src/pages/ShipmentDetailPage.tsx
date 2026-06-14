@@ -12,7 +12,7 @@ const ORANGE = '#E8700A';
 const STATUS_ORDER = [
   'CREATED', 'READY_FOR_ASSIGNMENT', 'TRUCK_ASSIGNED', 'DRIVER_ASSIGNED',
   'DOCK_RESERVED', 'READY_FOR_DISPATCH', 'DISPATCHED', 'IN_TRANSIT',
-  'ARRIVED_AT_WAREHOUSE', 'WAITING_FOR_DOCK', 'DOCK_ASSIGNED', 'UNLOADING', 'COMPLETED',
+  'APPROACHING_DESTINATION', 'ARRIVED_AT_GATE', 'RECEIVING_IN_PROGRESS', 'SLOTTING_IN_PROGRESS', 'COMPLETED',
 ];
 
 export default function ShipmentDetailPage() {
@@ -132,12 +132,12 @@ export default function ShipmentDetailPage() {
                     Mark Arrived
                   </Button>
                 )}
-                {s.status === 'ARRIVED_AT_WAREHOUSE' && (
+                {s.status === 'ARRIVED_AT_GATE' && (
                   <Button variant="contained" onClick={() => unloadMut.mutate()} disabled={unloadMut.isPending}>
-                    Start Unloading
+                    Start Receiving
                   </Button>
                 )}
-                {s.status === 'UNLOADING' && (
+                {s.status === 'RECEIVING_IN_PROGRESS' && (
                   <Button variant="contained" color="success" onClick={() => completeMut.mutate()} disabled={completeMut.isPending}>
                     Complete Shipment
                   </Button>

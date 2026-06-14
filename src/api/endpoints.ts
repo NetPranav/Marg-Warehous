@@ -18,6 +18,7 @@ export const shipmentsApi = {
   timeline: (id: number) => client.get(`/shipments/${id}/timeline/`),
   eta: (id: number) => client.get(`/shipments/${id}/eta/`),
   markArrived: (id: number) => client.post(`/shipments/${id}/mark-arrived/`),
+  reserveDock: (id: number, data: { dock_id: number }) => client.post(`/shipments/${id}/reserve-dock/`, data),
   startUnloading: (id: number) => client.post(`/shipments/${id}/start-unloading/`),
   complete: (id: number) => client.post(`/shipments/${id}/complete/`),
 };

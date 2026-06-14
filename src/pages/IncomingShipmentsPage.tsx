@@ -13,13 +13,13 @@ const ORANGE = '#E8700A';
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   DISPATCHED: { label: 'Dispatched', color: '#4F46E5' },
   IN_TRANSIT: { label: 'In Transit', color: '#F97316' },
-  ARRIVED_AT_WAREHOUSE: { label: 'Arrived', color: '#22C55E' },
-  WAITING_FOR_DOCK: { label: 'Waiting', color: '#F59E0B' },
-  DOCK_ASSIGNED: { label: 'Dock Assigned', color: '#3B82F6' },
-  UNLOADING: { label: 'Unloading', color: '#8B5CF6' },
+  ARRIVED_AT_GATE: { label: 'Arrived at Gate', color: '#22C55E' },
+  APPROACHING_DESTINATION: { label: 'Approaching', color: '#F59E0B' },
+  SLOTTING_IN_PROGRESS: { label: 'Slotting', color: '#3B82F6' },
+  RECEIVING_IN_PROGRESS: { label: 'Receiving', color: '#8B5CF6' },
 };
 
-const INCOMING_STATUSES = 'DISPATCHED,IN_TRANSIT,ARRIVED_AT_WAREHOUSE,WAITING_FOR_DOCK,DOCK_ASSIGNED,UNLOADING';
+const INCOMING_STATUSES = 'READY_FOR_TRANSIT,IN_TRANSIT,APPROACHING_DESTINATION,ARRIVED_AT_GATE,RECEIVING_IN_PROGRESS,SLOTTING_IN_PROGRESS';
 
 export default function IncomingShipmentsPage() {
   const navigate = useNavigate();

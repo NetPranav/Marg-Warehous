@@ -73,7 +73,7 @@ export default function SLALedgerPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['sla-shipments'],
     queryFn: () => shipmentsApi.list({
-      status__in: 'ARRIVED_AT_WAREHOUSE,WAITING_FOR_DOCK,DOCK_ASSIGNED,UNLOADING',
+      status__in: 'APPROACHING_DESTINATION,ARRIVED_AT_GATE,RECEIVING_IN_PROGRESS,SLOTTING_IN_PROGRESS',
       page_size: 50,
     }),
     refetchInterval: 10000,
